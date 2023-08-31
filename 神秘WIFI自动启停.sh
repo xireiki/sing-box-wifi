@@ -91,7 +91,7 @@ jqmode(){
   info "jq 模式"
   while true; do
     if [[ ! -e "${MODDIR}/disable" && -x "/data/data/com.termux/files/usr/bin/jq" ]]; then
-      ips=$(/data/data/com.termux/files/usr/bin/ip -j address show wlan0 | /data/data/com.termux/files/usr/bin/jq .[].addr_info)
+      ips=$(/data/data/com.termux/files/usr/bin/ip -j address show wlan0 | ${MODDIR}/bin/jq .[].addr_info)
       if [ "$ips" != "$lastStatus" ]; then
         authorizationKey="$(awk '/authorizationKey/{l=length($2);if(substr($2, 0, 1) == "\"" && substr($2, l - 1, 1)){print substr($2, 2, l - 2)}else{print $2}}' /data/adb/sfm/src/config.hjson)"
         if [ -n "$authorizationKey" ]; then
