@@ -1,0 +1,9 @@
+id=singBoxWiFi
+name=神秘模块拓展：自动WiFi切换
+author=xireiki
+version=v1.1.0
+versionCode=110
+description=WiFi断开，神秘启动；连接WIFI，神秘停止。
+minMagisk=20400
+api=5
+updateJson=https://raw.githubusercontent.com/xireiki/sing-box-wifi/main/sing-box-wifi.json
