@@ -5,8 +5,6 @@ on:
     paths-ignore:
       - ".github"
       - "README.md"
-    tags-ignore:
-      - "*"
 
 jobs:
   build:
