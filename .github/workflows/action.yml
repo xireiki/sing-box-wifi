@@ -1,0 +1,28 @@
+name: action
+
+on:
+  push:
+    paths-ignore:
+      - ".github"
+      - "README.md"
+    tags-ignore:
+      - "*"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Run build.sh
+        run: sh build.sh
+
+      - name: Upload Files
+        uses: actions/upload-artifact@v2
+        with:
+          name: sing-box-wifi
+          path: |
+            sing-box-wifi_v*.zip
+            README.md
+            LICENSE
