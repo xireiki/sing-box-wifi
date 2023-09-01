@@ -7,5 +7,7 @@ if [ "${ARCH}" != "arm64" ] ; then
   abort_install
 fi
 
-ui_print "- 开始设置环境权限(0777)"
-set_perm_recursive "${MODPATH}" 0 0 0777 0777
+ui_print "- 开始设置环境权限(0755 0755)"
+set_perm_recursive "${MODPATH}" 0 0 0755 0755
+
+ui_print "- 安装完成，请重启手机"
