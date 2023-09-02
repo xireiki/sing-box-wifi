@@ -27,11 +27,11 @@ iwmode(){
     if [[ ! -e "$MODDIR/disable" ]]; then
       SSID=`${MODDIR}/bin/iw wlan0 link | awk '/SSID/{print $2;exit}'`
       if [ "$SSID" != "$lastSSID" ]; then
-        status=`curl "http://localhost:23333/api/kernel" -H "authorization: $authorizationKey" -H "Content-Type: application/json" 2> /dev/null | awk -F \" '/status/{print $4}'`
+        status=`curl "http://localhost:23333/api/kernel" -H "authorization: $(awk '/authorizationKey/{l=length($2);if(substr($2, 0, 1) == "\"" && substr($2, l - 1, 1)){print substr($2, 2, l - 2)}else{print $2}}' /data/adb/sfm/src/config.hjson)" -H "Content-Type: application/json" 2> /dev/null | awk -F \" '/status/{print $4}'`
         if [ "$status" = "working" ]; then
           if [ -n "$SSID" ]; then
             info "你已连接到 WI-FI: $SSID，正在关闭 singBox\n"
-            $MODDIR/bin/controller stop
+            $MODDIR/bin/controller stop > /dev/null 2>&1 && info "神秘不唱了\n"
           else
             warn "你未连接到 WI-FI，singBox 正在运行\n"
           fi
@@ -40,7 +40,7 @@ iwmode(){
             warn "你已连接到 WI-FI: $SSID，singBox 不在运行\n"
           else
             info "你未连接到 WI-FI，正在启动 singBox\n"
-            $MODDIR/bin/controller start
+            $MODDIR/bin/controller start > /dev/null 2>&1 && info "神秘开唱了\n"
           fi
         else
           warn "神秘正在切换状态($status)，请耐心等待...\n"
@@ -59,11 +59,11 @@ jqmode(){
     if [[ ! -e "${MODDIR}/disable" && -x "/data/data/com.termux/files/usr/bin/jq" ]]; then
       ips=$(/data/data/com.termux/files/usr/bin/ip -j address show wlan0 | ${MODDIR}/bin/jq .[].addr_info)
       if [ "$ips" != "$lastStatus" ]; then
-        status=`curl "http://localhost:23333/api/kernel" -H "authorization: $authorizationKey" -H "Content-Type: application/json" 2> /dev/null | awk -F \" '/status/{print $4}'`
+        status=`curl "http://localhost:23333/api/kernel" -H "authorization: $(awk '/authorizationKey/{l=length($2);if(substr($2, 0, 1) == "\"" && substr($2, l - 1, 1)){print substr($2, 2, l - 2)}else{print $2}}' /data/adb/sfm/src/config.hjson)" -H "Content-Type: application/json" 2> /dev/null | awk -F \" '/status/{print $4}'`
         if [[ "$status" == "working" ]]; then
           if [[ "$ips" != "[]" ]]; then
             info "你已连接到 WI-FI，正在关闭 singBox\n"
-            $MODDIR/bin/controller stop
+            $MODDIR/bin/controller stop > /dev/null 2>&1 && info "神秘不唱了\n"
           else
             warn "你未连接到 WI-FI，singBox 正在运行\n"
           fi
@@ -72,7 +72,7 @@ jqmode(){
             warn "你已连接到 WI-FI，singBox 不在运行\n"
           else
             info "你未连接到 WI-FI，正在启动 singBox\n"
-            $MODDIR/bin/controller start
+            $MODDIR/bin/controller start > /dev/null 2>&1 && info "神秘开唱了\n"
           fi
         else
           warn "神秘正在切换状态($status)，请耐心等待...\n"
@@ -91,11 +91,11 @@ ipsmode(){
     if [[ ! -e "$MODDIR/disable" && -x "$MODDIR/bin/ips" ]]; then
       ipnumber="$(${MODDIR}/bin/ips wlan0)"
       if [[ "$ipnumber" != "$lastSize" ]]; then
-        status=`curl "http://localhost:23333/api/kernel" -H "authorization: $authorizationKey" -H "Content-Type: application/json" 2> /dev/null | awk -F \" '/status/{print $4}'`
+        status=`curl "http://localhost:23333/api/kernel" -H "authorization: $(awk '/authorizationKey/{l=length($2);if(substr($2, 0, 1) == "\"" && substr($2, l - 1, 1)){print substr($2, 2, l - 2)}else{print $2}}' /data/adb/sfm/src/config.hjson)" -H "Content-Type: application/json" 2> /dev/null | awk -F \" '/status/{print $4}'`
         if [[ "$status" == "working" ]]; then
           if [ "$ipnumber" -gt 0 ]; then
             info "你已连接到 WI-FI，正在关闭 singBox\n"
-            $MODDIR/bin/controller stop
+            $MODDIR/bin/controller stop > /dev/null 2>&1 && info "神秘不唱了\n"
           else
             warn "你未连接到 WI-FI，singBox 正在运行\n"
           fi
@@ -104,7 +104,7 @@ ipsmode(){
             warn "你已连接到 WI-FI，singBox 不在运行\n"
           else
             info "你未连接到 WI-FI，正在启动 singBox\n"
-            $MODDIR/bin/controller start
+            $MODDIR/bin/controller start > /dev/null 2>&1 && info "神秘开唱了\n"
           fi
         else
           warn "神秘正在切换状态($status)，请耐心等待...\n"
