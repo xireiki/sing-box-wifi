@@ -1,12 +1,20 @@
 #!/system/bin/sh
 
-mode="ips"
-# iw / jq / ips
-# default ips
-
 lang="zh_CN"
 # zh_CN / en_US
 # default en_US
+
+### Config
+# 权限不足
+if [ "${lang}" = "zh_CN" ]; then
+  PermDeni="权限被拒绝。\n"
+  InsuPerm="权限不足，请至少为 SHELL 及以上权限。\n"
+  OpenWifi="请打开 WLAN！"
+else
+  PermDeni="Permission denied.\n"
+  InsuPerm="Insufficient permission. Please be at least SHELL and above.\n"
+  OpenWifi="Please turn on WLAN!\n"
+fi
 
 info(){
   printf "INFO $@"
@@ -20,113 +28,73 @@ error(){
   printf "ERRO $@"
 }
 
-iwmode(){
-  lastSSID=""
-  info "iw 模式\n"
-  while true; do
-    if [[ ! -e "$MODDIR/disable" ]]; then
-      SSID=`${MODDIR}/bin/iw wlan0 link | awk '/SSID/{print $2;exit}'`
-      if [ "$SSID" != "$lastSSID" ]; then
-        status=`curl "http://localhost:23333/api/kernel" -H "authorization: $(awk '/authorizationKey/{l=length($2);if(substr($2, 0, 1) == "\"" && substr($2, l - 1, 1)){print substr($2, 2, l - 2)}else{print $2}}' /data/adb/sfm/src/config.hjson)" -H "Content-Type: application/json" 2> /dev/null | awk -F \" '/status/{print $4}'`
-        if [ "$status" = "working" ]; then
-          if [ -n "$SSID" ]; then
-            info "你已连接到 WI-FI: $SSID，正在关闭 singBox\n"
-            $MODDIR/bin/controller stop > /dev/null 2>&1 && info "神秘不唱了\n"
-          else
-            warn "你未连接到 WI-FI，singBox 正在运行\n"
-          fi
-        elif [ "$status" = "stopped" ]; then
-          if [ -n "$SSID" ]; then
-            warn "你已连接到 WI-FI: $SSID，singBox 不在运行\n"
-          else
-            info "你未连接到 WI-FI，正在启动 singBox\n"
-            $MODDIR/bin/controller start > /dev/null 2>&1 && info "神秘开唱了\n"
-          fi
-        else
-          warn "神秘正在切换状态($status)，请耐心等待...\n"
-        fi
-      fi
-      lastSSID=$SSID
-    fi
-    sleep 1
-  done
-}
-
-jqmode(){
-  lastStatus=""
-  info "jq 模式\n"
-  while true; do
-    if [[ ! -e "${MODDIR}/disable" && -x "/data/data/com.termux/files/usr/bin/jq" ]]; then
-      ips=$(/data/data/com.termux/files/usr/bin/ip -j address show wlan0 | ${MODDIR}/bin/jq .[].addr_info)
-      if [ "$ips" != "$lastStatus" ]; then
-        status=`curl "http://localhost:23333/api/kernel" -H "authorization: $(awk '/authorizationKey/{l=length($2);if(substr($2, 0, 1) == "\"" && substr($2, l - 1, 1)){print substr($2, 2, l - 2)}else{print $2}}' /data/adb/sfm/src/config.hjson)" -H "Content-Type: application/json" 2> /dev/null | awk -F \" '/status/{print $4}'`
-        if [[ "$status" == "working" ]]; then
-          if [[ "$ips" != "[]" ]]; then
-            info "你已连接到 WI-FI，正在关闭 singBox\n"
-            $MODDIR/bin/controller stop > /dev/null 2>&1 && info "神秘不唱了\n"
-          else
-            warn "你未连接到 WI-FI，singBox 正在运行\n"
-          fi
-        elif [[ "$status" == "stopped" ]]; then
-          if [[ "$ips" != "[]" ]]; then
-            warn "你已连接到 WI-FI，singBox 不在运行\n"
-          else
-            info "你未连接到 WI-FI，正在启动 singBox\n"
-            $MODDIR/bin/controller start > /dev/null 2>&1 && info "神秘开唱了\n"
-          fi
-        else
-          warn "神秘正在切换状态($status)，请耐心等待...\n"
-        fi
-      fi
-    fi
-    lastStatus="$ips"
-    sleep 1
-  done
-}
-
-ipsmode(){
-  lastSize=-1
-  info "ips 模式\n"
-  while true; do
-    if [[ ! -e "$MODDIR/disable" && -x "$MODDIR/bin/ips" ]]; then
-      ipnumber="$(${MODDIR}/bin/ips wlan0)"
-      if [[ "$ipnumber" != "$lastSize" ]]; then
-        status=`curl "http://localhost:23333/api/kernel" -H "authorization: $(awk '/authorizationKey/{l=length($2);if(substr($2, 0, 1) == "\"" && substr($2, l - 1, 1)){print substr($2, 2, l - 2)}else{print $2}}' /data/adb/sfm/src/config.hjson)" -H "Content-Type: application/json" 2> /dev/null | awk -F \" '/status/{print $4}'`
-        if [[ "$status" == "working" ]]; then
-          if [ "$ipnumber" -gt 0 ]; then
-            info "你已连接到 WI-FI，正在关闭 singBox\n"
-            $MODDIR/bin/controller stop > /dev/null 2>&1 && info "神秘不唱了\n"
-          else
-            warn "你未连接到 WI-FI，singBox 正在运行\n"
-          fi
-        elif [[ "$status" == "stopped" ]]; then
-          if [ "$ipnumber" -gt 0 ]; then
-            warn "你已连接到 WI-FI，singBox 不在运行\n"
-          else
-            info "你未连接到 WI-FI，正在启动 singBox\n"
-            $MODDIR/bin/controller start > /dev/null 2>&1 && info "神秘开唱了\n"
-          fi
-        else
-          warn "神秘正在切换状态($status)，请耐心等待...\n"
-        fi
-        lastSize="${ipnumber}"
-      fi
-    fi
-    sleep 1
-  done
-}
-
-if [[ -z "${MODDIR}" ]]; then
-  MODDIR="${0%/*}"
+UID="$(id -u)"
+if [ "${UID}" != 0 -a "${UID}" != 1000 -a "${UID}" != 2000 ]; then
+  error "${InsuPerm}"
+  exit 1
 fi
 
-case $mode in
-  iw)
-    iwmode;;
-  jq)
-    jqmode;;
-  ips)
-    ipsmode;;
-  *)
-    error "未知模式，请重新配置\n";;
-esac
+WLANEnabled(){
+  result="$(cmd wifi status | head -n 1 | grep enabled)"
+  if [ -n "${result}" ]; then
+    return 0
+  else
+    return 1
+  fi
+}
+
+getWiFiSSID(){
+  if WLANEnabled; then
+    SSID="$(cmd wifi status | grep "connected to" | awk '{print $5}' | cut -d '"' -f 2)"
+    printf "${SSID}"
+    return 0
+  else
+    error "${OpenWifi}"
+    return 1
+  fi
+}
+
+getSingBoxStatus(){
+  status=`curl "http://localhost:23333/api/kernel" -H "authorization: $(awk '/authorizationKey/{l=length($2);if(substr($2, 0, 1) == "\"" && substr($2, l - 1, 1)){print substr($2, 2, l - 2)}else{print $2}}' /data/adb/sfm/src/config.hjson)" -H "Content-Type: application/json" 2> /dev/null | awk -F \" '/status/{print $4}'`
+  printf "${status}"
+  if [ "${status}" = "working" ]; then
+    return 0
+  else
+    return 1
+  fi
+}
+
+notify(){
+  cmd notification post -t "${1}" singBoxWiFi "${2}"
+}
+
+singbox(){
+  if [ -n "${MODDIR}" -a -x "${MODDIR}/bin/controller" ]; then
+    $MODDIR/bin/controller "${1}" > /dev/null && return 0
+  else
+    curl "http://localhost:23333/api/kernel" -H "authorization: $(awk '/authorizationKey/{l=length($2);if(substr($2, 0, 1) == "\"" && substr($2, l - 1, 1)){print substr($2, 2, l - 2)}else{print $2}}' /data/adb/sfm/src/config.hjson)" -H "Content-Type: application/json" -d '{"method": "'${1}'"}' > /dev/null 2> /dev/null && return 0
+  fi
+}
+
+while true; do
+  if [ -f "${MODDIR}/disable" ]; then
+    continue
+  fi
+  status=$(getSingBoxStatus)
+  if [ "${status}" = "working" ]; then
+    # 神秘正在工作
+    if WLANEnabled; then
+      SSID="$(getWiFiSSID)"
+      if [ -n "${SSID}" ]; then
+        notify "模块提示" "你已连接到 “${SSID}”，正在关闭神秘"
+        singbox stop && info "神秘已关闭"
+      fi
+    fi
+  elif [ "${status}" = "stopped" ]; then
+    if ! WLANEnabled; then
+      notify "模块提示" "你未连接 WiFi，正在启动神秘"
+      singbox start && info "神秘已启动"
+    fi
+  fi
+  sleep 1
+done
