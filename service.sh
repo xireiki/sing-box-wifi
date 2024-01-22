@@ -32,7 +32,7 @@ done
 sleep 5
 
 # 正式启动
-if [[ -x "$MODDIR/sing-box-wifi.sh" ]]; then
+if [ -x "$MODDIR/sing-box-wifi.sh" ]; then
   $MODDIR/sing-box-wifi.sh  > $MODDIR/info.log 2>$MODDIR/error.log
 else
   sh "$MODDIR/sing-box-wifi.sh" > $MODDIR/info.log 2>$MODDIR/error.log

@@ -1,15 +1,21 @@
 #!/system/bin/sh
+MODDIR="${0%/*}"
+ASH_STANDALONE=1
 
 lang="zh_CN"
 # zh_CN / en_US
 # default en_US
 
 ### Config
+
+# Load Config
+source ${MODDIR}/config.sh
+
 # 权限不足
 if [ "${lang}" = "zh_CN" ]; then
   PermDeni="权限被拒绝。\n"
   InsuPerm="权限不足，请至少为 SHELL 及以上权限。\n"
-  OpenWifi="请打开 WLAN！"
+  OpenWifi="请打开 WLAN！\n"
 else
   PermDeni="Permission denied.\n"
   InsuPerm="Insufficient permission. Please be at least SHELL and above.\n"
@@ -65,15 +71,16 @@ getSingBoxStatus(){
 }
 
 notify(){
-  cmd notification post -t "${1}" singBoxWiFi "${2}"
+  su shell -c cmd notification post -t "${1}" singBoxWiFi "${2}"
 }
 
 singbox(){
   if [ -n "${MODDIR}" -a -x "${MODDIR}/bin/controller" ]; then
-    $MODDIR/bin/controller "${1}" > /dev/null && return 0
+    $MODDIR/bin/controller "${1}" > /dev/null
   else
-    curl "http://localhost:23333/api/kernel" -H "authorization: $(awk '/authorizationKey/{l=length($2);if(substr($2, 0, 1) == "\"" && substr($2, l - 1, 1)){print substr($2, 2, l - 2)}else{print $2}}' /data/adb/sfm/src/config.hjson)" -H "Content-Type: application/json" -d '{"method": "'${1}'"}' > /dev/null 2> /dev/null && return 0
+    curl "http://localhost:23333/api/kernel" -H "authorization: $(awk '/authorizationKey/{l=length($2);if(substr($2, 0, 1) == "\"" && substr($2, l - 1, 1)){print substr($2, 2, l - 2)}else{print $2}}' /data/adb/sfm/src/config.hjson)" -H "Content-Type: application/json" -d '{"method": "'${1}'"}' >/dev/null 2>&1
   fi
+  return 0
 }
 
 while true; do
@@ -85,15 +92,24 @@ while true; do
     # 神秘正在工作
     if WLANEnabled; then
       SSID="$(getWiFiSSID)"
-      if [ -n "${SSID}" ]; then
-        notify "模块提示" "你已连接到 “${SSID}”，正在关闭神秘"
+      if [ -n "${ActionSSID}" -a "${ActionSSID}" = "${SSID}" ]; then
+        notify "模块提示" "你已连接到指定 WiFi: “${SSID}”，正在关闭神秘"
+        singbox stop && info "神秘已关闭"
+      elif [ -n "${SSID}" -a -z "${ActionSSID}" ]; then
+        notify "模块提示" "你已连接到 WiFi “${SSID}”，正在关闭神秘"
         singbox stop && info "神秘已关闭"
       fi
     fi
   elif [ "${status}" = "stopped" ]; then
     if ! WLANEnabled; then
-      notify "模块提示" "你未连接 WiFi，正在启动神秘"
-      singbox start && info "神秘已启动"
+      if [ -n "${ActionSSID}" -a "${ActionSSID}" != "${SSID}" ]; then
+        notify "模块提示" "你未连接至指定 WiFi: “${ActionSSID}”，正在启动神秘"
+        singbox start && info "神秘已启动"
+      fi
+      if [ -z "${ActionSSID}" ]; then
+        notify "模块提示" "你未连接 WiFi，正在启动神秘"
+        singbox start && info "神秘已启动"
+      fi
     fi
   fi
   sleep 1
